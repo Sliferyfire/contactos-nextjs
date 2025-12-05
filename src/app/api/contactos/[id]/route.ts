@@ -40,34 +40,50 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     }
 }
 
-export async function DELETE(request: Request, context: { params: Promise<{ id: string }> } ) {
+export async function DELETE(
+    request: Request, 
+    context: { params: Promise<{ id: string }> } 
+) {
     try {
         const { id } = await context.params; 
-
-        const contactoEliminado = await prisma.contactos.delete({
-            where: {
-                id: Number(id)
-            }
-        }) 
-
-        if (!contactoEliminado)
-            return NextResponse.json({
-        message: 'Contacto no encontrado'}, {status: 404})
-
-        return NextResponse.json(contactoEliminado);
-    } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-
-            if(error.code == "P2025") 
-                return NextResponse.json({
-            message: "Contacto no encontrado"}, {status: 404})
-
-            return NextResponse.json({
-                message: error.message
-            }, {
-                status: 500,
+        
+        // Intentar con BigInt primero
+        let contactoEliminado;
+        try {
+            contactoEliminado = await prisma.contactos.delete({
+                where: {
+                    id: BigInt(id)
+                }
+            });
+        } catch (e) {
+            // Si falla con BigInt, intentar con Number
+            contactoEliminado = await prisma.contactos.delete({
+                where: {
+                    id: Number(id)
+                }
             });
         }
+
+        const safeContacto = {
+            ...contactoEliminado,
+            id: contactoEliminado.id.toString(),
+        };
+
+        return NextResponse.json(safeContacto);
+    } catch (error) {
+        console.error('Error al eliminar contacto:', error);
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2025") {
+                return NextResponse.json({
+                    message: "Contacto no encontrado"
+                }, { status: 404 });
+            }
+        }
+        return NextResponse.json({
+            message: error instanceof Error ? error.message : 'Error desconocido'
+        }, {
+            status: 500,
+        });
     }
 }
 

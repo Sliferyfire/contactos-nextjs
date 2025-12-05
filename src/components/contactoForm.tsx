@@ -72,6 +72,8 @@ function ContactoForm({ contacto = null, onClose }: ContactoFormProps) {
                 value={telefono}
                 className="w-full px-4 py-2 text-black bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 my-2" 
                 onChange={(e) => setTelefono(e.target.value)}
+                pattern="[0-9]{10}"
+                maxLength={10}
                 required
             />
             <select

@@ -58,7 +58,8 @@ export const ContactoProvider = ({children}: {children:React.ReactNode}) => {
         });
         
         if (response.ok) {
-            setContactos(contactos.filter((contacto: any) => contacto.id !== id));
+            // Forzar la recarga de contactos después de eliminar
+            await loadContactos();
         }
     }
 
